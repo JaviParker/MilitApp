@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './Login';
 import Timer from './Timer';
+import TimeEditScreen from './TimeEdit';
 import HomeScreen from './Home';
 import RegisterScreen from './Register';
 import { RootStackParamList } from './types';
@@ -19,6 +20,7 @@ const App = () => {
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Timer" component={Timer} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="TimeEdit" component={TimeEditScreen} options={{ headerShown: false }} />
         {/* <Stack.Screen name="Raids" component={RaidsScreen} options={{ headerShown: false }} /> */}
       </Stack.Navigator>
     </NavigationContainer>

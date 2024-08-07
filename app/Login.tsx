@@ -41,7 +41,7 @@ const LoginScreen = () => {
   const handleLogin = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        console.log('User logged in:', userCredential.user);
+        // console.log('User logged in:', userCredential.user);
         navigation.reset({
           index: 0,
           routes: [{ name: 'Home' }],

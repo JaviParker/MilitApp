@@ -9,14 +9,14 @@ import { Audio } from 'expo-av';
 import { RootStackParamList } from './types';
 
 const Timer: React.FC = () => {
-  const [countdown, setCountdown] = useState(60);
-  const [loading, setLoading] = useState(true);
-  const [isParent, setIsParent] = useState(false);
+  const [countdown, setCountdown] = useState<number>(60);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isParent, setIsParent] = useState<boolean>(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const auth = getAuth();
   const db = getFirestore();
   const [sound, setSound] = useState<Audio.Sound | null>(null);
-  var rango = "";
+  const [rango, setRango] = useState<string>('');
 
   const handleBackPress = () => {
     navigation.navigate('Home');
@@ -34,30 +34,46 @@ const Timer: React.FC = () => {
       try {
         const user = auth.currentUser;
         if (user) {
-          const docRef = doc(db, `(default)/MilitApp/UserData/${user.uid}`);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const userData = docSnap.data();
-            rango = userData.rango;
+          const userDocRef = doc(db, `(default)/MilitApp/UserData/${user.uid}`);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            const userRango = userData.rango;
+            setRango(userRango);
+            setIsParent(userRango === 'Teniente');
 
-            // setIsParent(userData.rango === 'Sargento' || userData.rango === 'Teniente');
-            
-            switch (userData.rango) {
-              case 'Cabo':
-                setCountdown(60);
-                break;
-              case 'Sargento':
-                setCountdown(60);
-                break;
-              case 'Teniente':
-                setCountdown(120);
-                setIsParent(true)
-                break;
-              default:
-                setCountdown(60);
+            const zone = userData.zona; // Asumiendo que el campo de zona está en userData
+
+            // Obtener el día actual en minúsculas
+            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+            const currentDay = dayNames[new Date().getDay()];
+
+            const timesDocRef = doc(db, `(default)/Zone/${zone}/${currentDay}`);
+            const timesDocSnap = await getDoc(timesDocRef);
+
+            if (timesDocSnap.exists()) {
+              const timesData = timesDocSnap.data();
+              if (timesData) {
+                switch (userRango) {
+                  case 'Cabo':
+                    setCountdown(parseInt(timesData.Cabo, 10) || 60);
+                    break;
+                  case 'Sargento':
+                    setCountdown(parseInt(timesData.Sargento, 10) || 60);
+                    break;
+                  case 'Teniente':
+                    setCountdown(parseInt(timesData.Teniente, 10) || 120);
+                    break;
+                  default:
+                    setCountdown(60);
+                }
+              }
+            } else {
+              console.log('No hay datos disponibles para el tiempo de comida');
+              setCountdown(60);
             }
           } else {
-            console.log('No such document!');
+            console.log('No such document in user data!');
           }
         }
       } catch (error) {
@@ -104,7 +120,7 @@ const Timer: React.FC = () => {
   useEffect(() => {
     return () => {
       if (sound) {
-        sound.unloadAsync(); 
+        sound.unloadAsync();
       }
     };
   }, [sound]);
@@ -217,7 +233,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     marginBottom: 10,
-    marginTop: 50
+    marginTop: 50,
   },
   startButtonText: {
     color: 'white',
@@ -233,7 +249,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 10,
     display: "flex",
-    marginTop: 50
+    marginTop: 50,
   },
   backButtonText: {
     color: '#10302B',

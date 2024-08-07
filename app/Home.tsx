@@ -15,6 +15,8 @@ const HomeScreen: React.FC = () => {
   const [isParent, setIsParent] = useState(true);
   const [loading, setLoading] = useState(true);
   const [initialStartTime, setInitialStartTime] = useState<number | null>(null);
+  const [times, setTimes] = useState<{ Cabo: string; Sargento: string; Teniente: string } | null>(null);
+  const [currentDay, setCurrentDay] = useState(Date);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -26,8 +28,26 @@ const HomeScreen: React.FC = () => {
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
             setIsParent(userData.rango === 'Teniente');
+            
+            const zone = userData.zona; // Asumiendo que el campo de zona está en userData
+
+            // Obtener el día actual en minúsculas
+            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+            setCurrentDay(dayNames[new Date().getDay()])
+            
+
+            const timesDocRef = doc(db, `(default)/Zone/${zone}/${currentDay}`);
+            const timesDocSnap = await getDoc(timesDocRef);
+            
+            
+            if (timesDocSnap.exists()) {
+              setTimes(timesDocSnap.data() as { Cabo: string; Sargento: string; Teniente: string });
+            } else {
+              console.log('No hay datos disponibles para el tiempo de comida');
+              setTimes(null);
+            }
           } else {
-            console.log('No such document!');
+            console.log('No such document in user data!');
           }
         }
       } catch (error) {
@@ -62,7 +82,7 @@ const HomeScreen: React.FC = () => {
       const data = doc.data();
       if (data && data.startTime) {
         const newStartTime = data.startTime;
-        if (newStartTime !== initialStartTime && newStartTime !== startTime) { // Comparar con el valor inicial y el estado actual
+        if (newStartTime !== initialStartTime && newStartTime !== startTime) {
           setStartTime(newStartTime);
         }
       }
@@ -78,9 +98,13 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  function redirectTo(){
+  function redirectTo() {
     navigation.navigate('Raids');
-  };
+  }
+
+  function timesEditRedirection() {
+    navigation.navigate('TimeEdit');
+  }
 
   const handleSecondaryPress = () => {
     navigation.navigate('Raids');
@@ -100,10 +124,6 @@ const HomeScreen: React.FC = () => {
     );
   }
 
-  function handlePrimaryPress(): void {
-    throw new Error('Function not implemented.');
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -116,18 +136,22 @@ const HomeScreen: React.FC = () => {
         />
       </View>
       <ScrollView>
-        <CardComponent
-          title="Tiempo de comida"
-          subtitle1="Lunes"
-          text1="Cabos - 60seg"
-          text2="Sargentos - 60seg"
-          text3="Tenientes - 120seg"
-          onPrimaryPress={handleStartPress} // Utiliza handleStartPress para el botón de iniciar
-          onSecondaryPress={handleSecondaryPress}
-          gradientColors={['#10302B', '#637B5D']}
-          primaryAction="Iniciar"
-          secondaryAction="Editar"
-        />
+        {times ? (
+          <CardComponent
+            title="Tiempo de comida"
+            subtitle1={`${currentDay}`} // Puedes cambiar esto dinámicamente si deseas
+            text1={`Cabos - ${times.Cabo}seg`}
+            text2={`Sargentos - ${times.Sargento}seg`}
+            text3={`Tenientes - ${times.Teniente}seg`}
+            onPrimaryPress={handleStartPress}
+            onSecondaryPress={timesEditRedirection}
+            gradientColors={['#10302B', '#637B5D']}
+            primaryAction="Iniciar"
+            secondaryAction="Editar"
+          />
+        ) : (
+          <Text>No hay datos disponibles para el tiempo de comida</Text>
+        )}
         <CardComponent
           title="Incursiones"
           subtitle1="Lunes"
@@ -156,6 +180,7 @@ const HomeScreen: React.FC = () => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -178,7 +203,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-function redirectTo(page: any, any: any) {
-  throw new Error('Function not implemented.');
-}
-

@@ -4,5 +4,6 @@ export type RootStackParamList = {
     Timer: undefined;
     Register: undefined;
     Raids: undefined;
+    TimeEdit: undefined;
   };
   
