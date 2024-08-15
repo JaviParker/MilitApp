@@ -7,14 +7,14 @@ import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Picker } from '@react-native-picker/picker';
 import { RootStackParamList } from './types';
-import { v4 as uuidv4 } from 'uuid';
+import uuid from 'react-native-uuid';
 
 const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [rank, setRank] = useState<string>('Cabo');
-  const [zone, setZone] = useState<string>('');
+  const [nombre, setName] = useState<string>('');
+  const [rango, setRank] = useState<string>('Cabo');
+  const [zona, setZone] = useState<string>('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -36,11 +36,18 @@ const RegisterScreen: React.FC = () => {
   };
 
   const uploadImageAsync = async (uri: string) => {
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    const fileRef = ref(storage, `profile_images/${uuidv4()}`);
-    await uploadBytes(fileRef, blob);
-    return await getDownloadURL(fileRef);
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const fileRef = ref(storage, `profile_images/${uuid.v4()}`);
+      await uploadBytes(fileRef, blob);
+      const downloadUrl = await getDownloadURL(fileRef);
+      return downloadUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
+      throw error;
+    }
   };
 
   const handleRegister = async () => {
@@ -53,16 +60,21 @@ const RegisterScreen: React.FC = () => {
         profileImageUrl = await uploadImageAsync(profileImage);
       }
 
-      await setDoc(doc(db, `MilitApp/UserData/${user.uid}`), {
-        name,
+      await setDoc(doc(db, `(default)/MilitApp/UserData/${user.uid}`), {
+        nombre,
         email,
-        rank,
-        zone,
+        rango,
+        zona,
         profileImage: profileImageUrl,
       });
 
       Alert.alert('Success', 'User registered successfully!');
-      navigation.navigate('Home');
+      
+      // Restablecer la navegación y redirigir al usuario a la pantalla de inicio
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
     } catch (error) {
       console.error('Error registering user:', error);
       Alert.alert('Error', 'Failed to register user. Please try again.');
@@ -82,8 +94,8 @@ const RegisterScreen: React.FC = () => {
         )}
       </TouchableOpacity>
       <TextInput
-        placeholder="Name"
-        value={name}
+        placeholder="Nombre"
+        value={nombre}
         onChangeText={setName}
         style={styles.input}
       />
@@ -94,14 +106,14 @@ const RegisterScreen: React.FC = () => {
         style={styles.input}
       />
       <TextInput
-        placeholder="Password"
+        placeholder="Contraseña"
         value={password}
         onChangeText={setPassword}
         style={styles.input}
         secureTextEntry
       />
       <Picker
-        selectedValue={rank}
+        selectedValue={rango}
         onValueChange={(itemValue) => setRank(itemValue)}
         style={styles.picker}
       >
@@ -110,8 +122,8 @@ const RegisterScreen: React.FC = () => {
         <Picker.Item label="Teniente" value="Teniente" />
       </Picker>
       <TextInput
-        placeholder="Zone"
-        value={zone}
+        placeholder="Zona"
+        value={zona}
         onChangeText={setZone}
         style={styles.input}
       />

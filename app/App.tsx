@@ -7,6 +7,8 @@ import Timer from './Timer';
 import TimeEditScreen from './TimeEdit';
 import HomeScreen from './Home';
 import RegisterScreen from './Register';
+import ListSelectionScreen from './ListSelection';
+import NewListScreen from './NewList';
 import { RootStackParamList } from './types';
 // import RaidsScreen from './Raids';
 
@@ -21,6 +23,8 @@ const App = () => {
         <Stack.Screen name="Timer" component={Timer} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="TimeEdit" component={TimeEditScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ListSelection" component={ListSelectionScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="NewList" component={NewListScreen} options={{ headerShown: false }} />
         {/* <Stack.Screen name="Raids" component={RaidsScreen} options={{ headerShown: false }} /> */}
       </Stack.Navigator>
     </NavigationContainer>

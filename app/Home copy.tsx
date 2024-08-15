@@ -17,7 +17,6 @@ const HomeScreen: React.FC = () => {
   const [initialStartTime, setInitialStartTime] = useState<number | null>(null);
   const [times, setTimes] = useState<{ Cabo: string; Sargento: string; Teniente: string } | null>(null);
   const [currentDay, setCurrentDay] = useState(Date);
-  const [zone, setZone] = useState<string>('');
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -28,19 +27,18 @@ const HomeScreen: React.FC = () => {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            console.log(userData.rango);
-            
             setIsParent(userData.rango === 'Teniente');
-            console.log(isParent);
             
             const zone = userData.zona; // Asumiendo que el campo de zona está en userData
 
             // Obtener el día actual en minúsculas
             const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-            setCurrentDay(dayNames[new Date().getDay()]);
+            setCurrentDay(dayNames[new Date().getDay()])
             
+
             const timesDocRef = doc(db, `(default)/Zone/${zone}/${currentDay}`);
             const timesDocSnap = await getDoc(timesDocRef);
+            
             
             if (timesDocSnap.exists()) {
               setTimes(timesDocSnap.data() as { Cabo: string; Sargento: string; Teniente: string });
@@ -112,10 +110,6 @@ const HomeScreen: React.FC = () => {
     navigation.navigate('Raids');
   };
 
-  const redirectToListSelection = () => {
-    navigation.navigate('ListSelection');
-  };
-
   useEffect(() => {
     if (startTime !== initialStartTime && startTime !== null) {
       navigation.navigate('Timer');
@@ -142,21 +136,21 @@ const HomeScreen: React.FC = () => {
         />
       </View>
       <ScrollView>
-        {times && isParent ? (
+        {times ? (
           <CardComponent
             title="Tiempo de comida"
             subtitle1={`${currentDay}`} // Puedes cambiar esto dinámicamente si deseas
             text1={`Cabos - ${times.Cabo}seg`}
             text2={`Sargentos - ${times.Sargento}seg`}
             text3={`Tenientes - ${times.Teniente}seg`}
-            onPrimaryPress={redirectToListSelection}  // Redirige a listSelection
+            onPrimaryPress={handleStartPress}
             onSecondaryPress={timesEditRedirection}
             gradientColors={['#10302B', '#637B5D']}
             primaryAction="Iniciar"
             secondaryAction="Editar"
           />
         ) : (
-          <Text></Text>
+          <Text>No hay datos disponibles para el tiempo de comida</Text>
         )}
         <CardComponent
           title="Incursiones"
