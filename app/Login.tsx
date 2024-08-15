@@ -17,7 +17,7 @@ const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: 'TU_CLIENT_ID_DE_GOOGLE',
+    clientId: 'Google client id',
   });
 
   useEffect(() => {
@@ -100,9 +100,7 @@ const LoginScreen = () => {
       <Pressable style={styles.secondaryButton} onPress={handleRegister}>
         <Text style={styles.secondaryButtonText}>Registrarse</Text>
       </Pressable>
-      <Pressable style={styles.primaryButton} onPress={handleGoogleLogin} disabled={!request}>
-        <Text style={styles.primaryButtonText}>Iniciar con Google</Text>
-      </Pressable>
+      
       {/* {Platform.OS !== 'web' && (
         <Pressable style={styles.primaryButton} onPress={handleGoogleLogin} disabled={!request}>
           <Text style={styles.primaryButtonText}>Iniciar con Google</Text>

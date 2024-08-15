@@ -8,5 +8,6 @@ export type RootStackParamList = {
     TimeEdit: undefined;
     NewList: { zona: string };
     ListSelection: undefined;
+    Notifications: undefined;
   };
   

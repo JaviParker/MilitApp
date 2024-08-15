@@ -12,6 +12,7 @@ import NewListScreen from './NewList';
 import { RootStackParamList } from './types';
 import RaidsScreen from './Raids';
 import RaidsConfig from './RaidsConfig';
+import NotificationsScreen from './Notifications';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -28,6 +29,7 @@ const App = () => {
         <Stack.Screen name="NewList" component={NewListScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Raids" component={RaidsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="RaidsConfig" component={RaidsConfig} options={{ headerShown: false }} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

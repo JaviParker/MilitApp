@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, Button, Pressable, TouchableOpacity } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, onSnapshot, setDoc, addDoc, collection } from 'firebase/firestore';
 import { MaterialIcons } from '@expo/vector-icons';
 import CardComponent from '@/components/CardComponent';
 import { RootStackParamList } from './types';
+
+interface Notification {
+  message: string;
+  timestamp: string;
+  user: string;
+}
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -16,13 +22,16 @@ const HomeScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [initialStartTime, setInitialStartTime] = useState<number | null>(null);
   const [times, setTimes] = useState<{ Cabo: string; Sargento: string; Teniente: string } | null>(null);
-  const [currentDay, setCurrentDay] = useState(Date);
-  const [raidDay, setRaidDay] = useState(Date);
+  const [currentDay, setCurrentDay] = useState<string>('');
+  const [raidDay, setRaidDay] = useState<string>('');
   const [isColonel, setIsColonel] = useState(false);
   const [zone, setZone] = useState<string | null>(null);
   const [team, setTeam] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [duration, setDuration] = useState<string | null>(null);
   const [distance, setDistance] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>(''); // Estado para manejar el mensaje
+  const [notifications, setNotifications] = useState<Notification[]>([]); // Estado para manejar las notificaciones
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -33,30 +42,25 @@ const HomeScreen: React.FC = () => {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            
             setIsParent(userData.rango === 'Teniente' || userData?.rango === 'Coronel');
             setIsColonel(userData?.rango === 'Coronel');
-            
-            setZone(userData.zona) // Asumiendo que el campo de zona está en userData
+            setUserName(userData.nombre);
+            setZone(userData.zona);
 
-            // Obtener el día actual en minúsculas
             const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
             setCurrentDay(dayNames[new Date().getDay()]);
 
             const dayNames2 = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
             setRaidDay(dayNames2[new Date().getDay()]);
-            
-            const timesDocRef = doc(db, `(default)/Zone/${zone}/${currentDay}`);
+
+            const timesDocRef = doc(db, `(default)/Zone/${userData.zona}/${currentDay}`);
             const timesDocSnap = await getDoc(timesDocRef);
             
             if (timesDocSnap.exists()) {
               setTimes(timesDocSnap.data() as { Cabo: string; Sargento: string; Teniente: string });
             } else {
-              console.log('No hay datos disponibles para el tiempo de comida');
               setTimes(null);
             }
-          } else {
-            console.log('No such document in user data!');
           }
         }
       } catch (error) {
@@ -73,10 +77,8 @@ const HomeScreen: React.FC = () => {
         if (timerDocSnap.exists()) {
           const timerData = timerDocSnap.data();
           const startTimeValue = timerData.startTime;
-          setInitialStartTime(startTimeValue); // Guardar el valor inicial
-          setStartTime(startTimeValue); // Actualizar el estado startTime
-        } else {
-          console.log('No such document!');
+          setInitialStartTime(startTimeValue);
+          setStartTime(startTimeValue);
         }
       } catch (error) {
         console.error('Error fetching startTime:', error);
@@ -87,13 +89,13 @@ const HomeScreen: React.FC = () => {
       const docRef = doc(db, `Zone/51/Raids/${raidDay}`);
       const docSnap = await getDoc(docRef);
 
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setTeam(data.lista);
-            setDistance(data.kilometros);
-            setDuration(data.tiempo);
-          }
-    }      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setTeam(data.lista);
+        setDistance(data.kilometros);
+        setDuration(data.tiempo);
+      }
+    };
 
     fetchUserData();
     fetchStartTime();
@@ -115,7 +117,7 @@ const HomeScreen: React.FC = () => {
 
   const handleStartPress = async () => {
     if (isParent) {
-      const startTime = Date.now() + 5000; // Ejemplo: 5 segundos de retraso
+      const startTime = Date.now() + 5000; 
       await setDoc(doc(db, '(default)/MilitApp/TimerControl/startTime'), { startTime });
     }
   };
@@ -142,6 +144,31 @@ const HomeScreen: React.FC = () => {
     }
   }, [startTime, initialStartTime, navigation]);
 
+  const handleSendMessage = async () => {
+    if (message.trim()) {
+      const user = auth.currentUser;
+      const timestamp = new Date().toISOString();
+      try {
+        await addDoc(collection(db, 'Zone/51/Notifications'), {
+          message,
+          timestamp,
+          user: user ? userName : 'Anónimo',
+        });
+        setMessage('');
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    }
+  };
+
+  const renderNotificationItem = ({ item }: { item: Notification }) => (
+    <View style={styles.notificationItem}>
+      <Text style={styles.notificationUser}>{item.user}</Text>
+      <Text style={styles.notificationMessage}>{item.message}</Text>
+      <Text style={styles.notificationTimestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -158,18 +185,18 @@ const HomeScreen: React.FC = () => {
           name="notifications" 
           size={24} 
           color="#10302B" 
-          onPress={() => alert('Notificaciones')} 
+          onPress={() => navigation.navigate('Notifications')} 
         />
       </View>
       <ScrollView>
         {times && isParent ? (
           <CardComponent
             title="Tiempo de comida"
-            subtitle1={`${currentDay}`} // Puedes cambiar esto dinámicamente si deseas
+            subtitle1={`${currentDay}`} 
             text1={`Cabos - ${times.Cabo}seg`}
             text2={`Sargentos - ${times.Sargento}seg`}
             text3={`Tenientes - ${times.Teniente}seg`}
-            onPrimaryPress={redirectToListSelection}  // Redirige a listSelection
+            onPrimaryPress={redirectToListSelection}
             onSecondaryPress={timesEditRedirection}
             gradientColors={['#10302B', '#637B5D']}
             primaryAction="Iniciar"
@@ -190,18 +217,21 @@ const HomeScreen: React.FC = () => {
           primaryAction="Iniciar"
           secondaryAction={isColonel ? 'Cambiar' : 'Reportar'}
         />
-        {/* <CardComponent
-          title="Listas"
-          subtitle1="Lunes"
-          text1="Texto 1"
-          text2="Texto 2"
-          text3="Texto 3"
-          onPrimaryPress={handlePrimaryPress}
-          onSecondaryPress={handleSecondaryPress}
-          gradientColors={['#BEA27F', '#705C44']}
-          primaryAction="Ver listas"
-          secondaryAction="Iniciar"
-        /> */}
+        {isColonel && (
+          <View style={styles.messageContainer}>
+            <Text style={styles.infoText}>Mensaje para zona {zone}</Text>
+            <TextInput
+              style={styles.textInput}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Escribe tu mensaje aquí..."
+              multiline
+            />
+            <TouchableOpacity style={styles.btnSend} onPress={handleSendMessage}>
+              <Text style={styles.btnSendText}>Enviar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -216,15 +246,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   headerText: {
     fontSize: 24,
+    fontWeight: 'bold',
     color: '#10302B',
-    fontWeight: 'bold'
+  },
+  infoText: {
+    fontSize: 20,
+    marginBottom: 10,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  btnSend: {
+    backgroundColor: '#10302B',
+    padding: 10,
+    borderRadius: 5,
+  },
+  btnSendText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  messageContainer: {
+    marginTop: 20,
+    padding: 10,
+    borderRadius: 5,
+    borderColor: '#9D2449',
+    borderWidth: 2,
+  },
+  notificationItem: {
+    marginBottom: 10,
+  },
+  notificationUser: {
+    fontWeight: 'bold',
+  },
+  notificationMessage: {
+    fontSize: 16,
+  },
+  notificationTimestamp: {
+    fontSize: 12,
+    color: '#777',
   },
   loadingText: {
     fontSize: 20,
+    fontWeight: 'bold',
   },
 });
 

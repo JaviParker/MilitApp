@@ -157,11 +157,6 @@ const Timer: React.FC = () => {
       <Text style={[styles.infoText, countdown === 0 && styles.infoTextDanger]}>
         {countdown === 0 ? 'Deje de comer' : 'Siga comiendo' }
       </Text>
-      {isParent && (
-        <TouchableOpacity style={styles.startButton} onPress={handleStartPress}>
-          <Text style={styles.startButtonText}>Iniciar Temporizador</Text>
-        </TouchableOpacity>
-      )}
       <TouchableOpacity style={[styles.invisible, countdown === 0 && styles.backButton]} onPress={handleBackPress}>
         <Text style={styles.backButtonText}>Volver</Text>
       </TouchableOpacity>
