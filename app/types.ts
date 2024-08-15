@@ -4,6 +4,7 @@ export type RootStackParamList = {
     Timer: undefined;
     Register: undefined;
     Raids: undefined;
+    RaidsConfig: undefined;
     TimeEdit: undefined;
     NewList: { zona: string };
     ListSelection: undefined;

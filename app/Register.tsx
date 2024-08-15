@@ -120,6 +120,7 @@ const RegisterScreen: React.FC = () => {
         <Picker.Item label="Cabo" value="Cabo" />
         <Picker.Item label="Sargento" value="Sargento" />
         <Picker.Item label="Teniente" value="Teniente" />
+        <Picker.Item label="Coronel" value="Coronel" />
       </Picker>
       <TextInput
         placeholder="Zona"

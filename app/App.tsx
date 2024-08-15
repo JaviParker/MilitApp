@@ -10,7 +10,8 @@ import RegisterScreen from './Register';
 import ListSelectionScreen from './ListSelection';
 import NewListScreen from './NewList';
 import { RootStackParamList } from './types';
-// import RaidsScreen from './Raids';
+import RaidsScreen from './Raids';
+import RaidsConfig from './RaidsConfig';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -25,7 +26,8 @@ const App = () => {
         <Stack.Screen name="TimeEdit" component={TimeEditScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ListSelection" component={ListSelectionScreen} options={{ headerShown: false }} />
         <Stack.Screen name="NewList" component={NewListScreen} options={{ headerShown: false }} />
-        {/* <Stack.Screen name="Raids" component={RaidsScreen} options={{ headerShown: false }} /> */}
+        <Stack.Screen name="Raids" component={RaidsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="RaidsConfig" component={RaidsConfig} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

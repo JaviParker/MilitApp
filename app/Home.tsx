@@ -17,7 +17,12 @@ const HomeScreen: React.FC = () => {
   const [initialStartTime, setInitialStartTime] = useState<number | null>(null);
   const [times, setTimes] = useState<{ Cabo: string; Sargento: string; Teniente: string } | null>(null);
   const [currentDay, setCurrentDay] = useState(Date);
-  const [zone, setZone] = useState<string>('');
+  const [raidDay, setRaidDay] = useState(Date);
+  const [isColonel, setIsColonel] = useState(false);
+  const [zone, setZone] = useState<string | null>(null);
+  const [team, setTeam] = useState<string | null>(null);
+  const [duration, setDuration] = useState<string | null>(null);
+  const [distance, setDistance] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -28,16 +33,18 @@ const HomeScreen: React.FC = () => {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            console.log(userData.rango);
             
-            setIsParent(userData.rango === 'Teniente');
-            console.log(isParent);
+            setIsParent(userData.rango === 'Teniente' || userData?.rango === 'Coronel');
+            setIsColonel(userData?.rango === 'Coronel');
             
-            const zone = userData.zona; // Asumiendo que el campo de zona está en userData
+            setZone(userData.zona) // Asumiendo que el campo de zona está en userData
 
             // Obtener el día actual en minúsculas
             const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
             setCurrentDay(dayNames[new Date().getDay()]);
+
+            const dayNames2 = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            setRaidDay(dayNames2[new Date().getDay()]);
             
             const timesDocRef = doc(db, `(default)/Zone/${zone}/${currentDay}`);
             const timesDocSnap = await getDoc(timesDocRef);
@@ -76,8 +83,21 @@ const HomeScreen: React.FC = () => {
       }
     };
 
+    const fetchRaidData = async () => {
+      const docRef = doc(db, `Zone/51/Raids/${raidDay}`);
+      const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setTeam(data.lista);
+            setDistance(data.kilometros);
+            setDuration(data.tiempo);
+          }
+    }      
+
     fetchUserData();
     fetchStartTime();
+    fetchRaidData();
 
     const timerDocRef = doc(db, '(default)/MilitApp/TimerControl/startTime');
     const unsubscribe = onSnapshot(timerDocRef, (doc) => {
@@ -133,7 +153,7 @@ const HomeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>ZONA 51</Text>
+        <Text style={styles.headerText}>ZONA {zone}</Text>
         <MaterialIcons 
           name="notifications" 
           size={24} 
@@ -160,15 +180,15 @@ const HomeScreen: React.FC = () => {
         )}
         <CardComponent
           title="Incursiones"
-          subtitle1="Lunes"
-          text1="Expiracion"
-          text2="17/Junio/2024"
-          text3="15 KM"
+          subtitle1={`${raidDay}`}
+          text1={`${team}`}
+          text2={`${distance}`}
+          text3={`${duration}`}
           onPrimaryPress={redirectTo}
-          onSecondaryPress={handleSecondaryPress}
+          onSecondaryPress={() => navigation.navigate(isColonel ? 'RaidsConfig' : 'Raids')}
           gradientColors={['#9D2449','#BEA27F']}
           primaryAction="Iniciar"
-          secondaryAction="Reportar"
+          secondaryAction={isColonel ? 'Cambiar' : 'Reportar'}
         />
         {/* <CardComponent
           title="Listas"
